@@ -36,3 +36,67 @@ router.get("/:username", async (req, res, next) => {
     next(e);
   }
 });
+
+router.post('/', async (req, res, next) => {
+  try {
+    const { username, password, nombre, edad, id_estado, id_tipo_usuario } = req.body;
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query(
+      'INSERT INTO usuario (username, password, nombre, edad, id_estado, id_tipo_usuario) VALUES (?, ?, ?, ?, ?, ?)',
+      [username, hashed, nombre, edad, id_estado, id_tipo_usuario]
+    );
+    res.status(201).json({ message: 'Creado' });
+  } catch (e) {
+    if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Usuario ya existe' });
+    next(e);
+  }
+});
+
+router.put('/:username', async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    const { password, nombre, edad, id_estado, id_tipo_usuario } = req.body;
+    const fields = [];
+    const values = [];
+    if (password) {
+      fields.push('password = ?');
+      values.push(await bcrypt.hash(password, 10));
+    }
+    if (nombre) {
+      fields.push('nombre = ?');
+      values.push(nombre);
+    }
+    if (edad) {
+      fields.push('edad = ?');
+      values.push(edad);
+    }
+    if (id_estado) {
+      fields.push('id_estado = ?');
+      values.push(id_estado);
+    }
+    if (id_tipo_usuario) {
+      fields.push('id_tipo_usuario = ?');
+      values.push(id_tipo_usuario);
+    }
+    if (!fields.length) return res.status(400).json({ error: 'Nada que actualizar' });
+    values.push(username);
+    const [result] = await pool.query(`UPDATE usuario SET ${fields.join(', ')} WHERE username = ?`, values);
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ message: 'Actualizado' });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.delete('/:username', async (req, res, next) => {
+  try {
+    const { username } = req.params;
+    const [result] = await pool.query('DELETE FROM usuario WHERE username = ?', [username]);
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ message: 'Eliminado' });
+  } catch (e) {
+    next(e);
+  }
+});
+
+export default router;
