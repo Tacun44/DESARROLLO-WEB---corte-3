@@ -1,6 +1,9 @@
 import axios from 'axios';
+const isDevelopment = import.meta.env.DEV;
 export const api = axios.create({
-baseURL: 'http://localhost:4000/api'
+baseURL: isDevelopment 
+  ? 'http://localhost:4000/api'
+  : 'https://backend-black-phi-29.vercel.app/api'
 });
 export const UsuariosAPI = {
 list: () => api.get('/usuarios').then(r => r.data),

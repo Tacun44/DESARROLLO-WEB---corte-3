@@ -25,14 +25,6 @@ export default function App() {
             esté corriendo en <code>http://localhost:4000/api</code>.
           </p>
         </div>
-        <div className="hero-actions">
-          <button className="ghost" type="button" onClick={() => setSelected(null)}>
-            Nuevo registro
-          </button>
-          <button className="primary" type="button" onClick={refresh}>
-            Refrescar lista
-          </button>
-        </div>
       </header>
 
       <section className="content-grid">

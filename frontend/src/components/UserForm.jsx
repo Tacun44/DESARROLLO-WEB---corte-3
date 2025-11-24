@@ -6,7 +6,14 @@ import { CatalogosAPI, UsuariosAPI } from '../api';
 
 const schema = yup.object({
   username: yup.string().required('Requerido'),
-  password: yup.string().min(6, 'Mínimo 6 caracteres').optional(),
+  password: yup
+    .string()
+    .transform((value) => (value === '' || !value ? undefined : value))
+    .when('$isEditing', {
+      is: false,
+      then: (schema) => schema.min(6, 'Mínimo 6 caracteres').required('Requerido'),
+      otherwise: (schema) => schema.min(6, 'Mínimo 6 caracteres').optional()
+    }),
   nombre: yup.string().required('Requerido'),
   edad: yup
     .number()
@@ -19,6 +26,7 @@ const schema = yup.object({
 });
 
 export default function UserForm({ selected, onSuccess }) {
+  const isEditing = !!selected;
   const {
     register,
     handleSubmit,
@@ -26,6 +34,7 @@ export default function UserForm({ selected, onSuccess }) {
     formState: { errors }
   } = useForm({
     resolver: yupResolver(schema),
+    context: { isEditing },
     defaultValues: {
       username: '',
       password: '',
@@ -71,7 +80,10 @@ export default function UserForm({ selected, onSuccess }) {
           id_estado: Number(id_estado),
           id_tipo_usuario: Number(id_tipo_usuario)
         };
-        if (password) payload.password = password;
+        // Solo incluir password si tiene valor (no vacío)
+        if (password && password.trim() !== '') {
+          payload.password = password;
+        }
         await UsuariosAPI.update(username, payload);
       } else {
         await UsuariosAPI.create({
